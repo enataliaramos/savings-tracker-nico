@@ -1,5 +1,5 @@
 'use client';
-import { useState, ChangeEvent } from 'react';
+import { useState } from 'react';
 
 interface Transaction {
   amount: number;
@@ -8,39 +8,27 @@ interface Transaction {
 }
 
 export default function SavingsTracker() {
-  const [balance, setBalance] = useState<number>(0);
+  const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [amount, setAmount] = useState<string>('');
-  const [note, setNote] = useState<string>('');
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [password, setPassword] = useState<string>('');
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [password, setPassword] = useState('');
 
   const handleDeposit = () => {
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount)) return;
+    const numAmount = Number(amount);
+    if (numAmount <= 0 || !Number.isFinite(numAmount)) return;
     
-    const newTransaction: Transaction = {
+    const newTransaction = {
       amount: numAmount,
       date: new Date().toISOString(),
-      note: note || 'Deposit',
+      note: note || 'Deposit'
     };
     
-    setTransactions([newTransaction, ...transactions]);
+    setTransactions(prev => [newTransaction, ...prev]);
     setBalance(prev => prev + numAmount);
     setAmount('');
     setNote('');
-  };
-
-  const handleAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value);
-  };
-
-  const handleNoteChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setNote(e.target.value);
-  };
-
-  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
   };
 
   return (
@@ -63,26 +51,27 @@ export default function SavingsTracker() {
               type="number"
               placeholder="Amount"
               value={amount}
-              onChange={handleAmountChange}
+              onChange={e => setAmount(e.target.value)}
               style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
             />
             <input
+              type="text"
               placeholder="Note (optional)"
               value={note}
-              onChange={handleNoteChange}
+              onChange={e => setNote(e.target.value)}
               style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
             />
             <button 
               onClick={handleDeposit}
-              disabled={!amount || isNaN(parseFloat(amount))}
+              disabled={!amount || Number(amount) <= 0}
               style={{ 
                 width: '100%', 
                 padding: '8px', 
-                backgroundColor: !amount || isNaN(parseFloat(amount)) ? '#ccc' : '#2563eb',
+                backgroundColor: !amount || Number(amount) <= 0 ? '#ccc' : '#2563eb',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: !amount || isNaN(parseFloat(amount)) ? 'not-allowed' : 'pointer'
+                cursor: !amount || Number(amount) <= 0 ? 'not-allowed' : 'pointer'
               }}
             >
               Add Deposit
@@ -94,7 +83,7 @@ export default function SavingsTracker() {
               type="password"
               placeholder="Admin Password"
               value={password}
-              onChange={handlePasswordChange}
+              onChange={e => setPassword(e.target.value)}
               style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
             />
             <button 
