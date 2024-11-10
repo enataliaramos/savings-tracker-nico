@@ -1,25 +1,32 @@
 'use client';
 import { useState } from 'react';
 
+interface Transaction {
+  amount: number;
+  date: string;
+  note: string;
+}
+
 export default function SavingsTracker() {
-  const [balance, setBalance] = useState(0);
-  const [transactions, setTransactions] = useState([]);
-  const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [password, setPassword] = useState('');
+  const [balance, setBalance] = useState<number>(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [amount, setAmount] = useState<string>('');
+  const [note, setNote] = useState<string>('');
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [password, setPassword] = useState<string>('');
 
   const handleDeposit = () => {
-    if (!amount || isNaN(amount)) return;
+    const numAmount = parseFloat(amount);
+    if (!amount || isNaN(numAmount)) return;
     
-    const newTransaction = {
-      amount: parseFloat(amount),
+    const newTransaction: Transaction = {
+      amount: numAmount,
       date: new Date().toISOString(),
       note: note || 'Deposit',
     };
     
     setTransactions([newTransaction, ...transactions]);
-    setBalance(prev => prev + parseFloat(amount));
+    setBalance(prev => prev + numAmount);
     setAmount('');
     setNote('');
   };
@@ -55,15 +62,15 @@ export default function SavingsTracker() {
             />
             <button 
               onClick={handleDeposit}
-              disabled={!amount || isNaN(amount)}
+              disabled={!amount || isNaN(parseFloat(amount))}
               style={{ 
                 width: '100%', 
                 padding: '8px', 
-                backgroundColor: !amount || isNaN(amount) ? '#ccc' : '#2563eb',
+                backgroundColor: !amount || isNaN(parseFloat(amount)) ? '#ccc' : '#2563eb',
                 color: 'white',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: !amount || isNaN(amount) ? 'not-allowed' : 'pointer'
+                cursor: !amount || isNaN(parseFloat(amount)) ? 'not-allowed' : 'pointer'
               }}
             >
               Add Deposit
@@ -79,52 +86,4 @@ export default function SavingsTracker() {
               style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
             />
             <button 
-              onClick={() => setIsAdmin(password === '123456')}
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                backgroundColor: '#2563eb',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Login as Admin
-            </button>
-          </div>
-        )}
-
-        <div>
-          <h3 style={{ fontWeight: 'bold', marginBottom: '15px' }}>Transaction History</h3>
-          <div>
-            {transactions.map((tx, index) => (
-              <div 
-                key={index}
-                style={{ 
-                  padding: '10px', 
-                  backgroundColor: '#f8f9fa', 
-                  borderRadius: '4px',
-                  marginBottom: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: '500' }}>{tx.note}</div>
-                  <div style={{ fontSize: '14px', color: '#666' }}>
-                    {new Date(tx.date).toLocaleDateString()}
-                  </div>
-                </div>
-                <div style={{ color: '#22c55e', fontWeight: '500' }}>
-                  +${tx.amount.toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+              onC
