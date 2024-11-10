@@ -28,7 +28,7 @@ export default function SavingsTracker() {
     <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
       <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
-          Nephew's Savings Tracker
+          Nico&apos;s Savings Tracker
         </h1>
 
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
