@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Transaction {
   amount: number;
@@ -8,12 +8,38 @@ interface Transaction {
 }
 
 export default function SavingsTracker() {
-  const [balance, setBalance] = useState(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [balance, setBalance] = useState(() => {
+    // Load initial balance from localStorage
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('balance');
+      return saved ? Number(saved) : 0;
+    }
+    return 0;
+  });
+
+  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+    // Load initial transactions from localStorage
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('transactions');
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
+
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState('');
+
+  // Save balance to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('balance', balance.toString());
+  }, [balance]);
+
+  // Save transactions to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+  }, [transactions]);
 
   const handleDeposit = () => {
     const numAmount = Number(amount);
