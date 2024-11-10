@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 
 interface Transaction {
+  id: string; // Adding an ID to uniquely identify transactions
   amount: number;
   date: string;
   note: string;
@@ -9,7 +10,6 @@ interface Transaction {
 
 export default function SavingsTracker() {
   const [balance, setBalance] = useState(() => {
-    // Load initial balance from localStorage
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('balance');
       return saved ? Number(saved) : 0;
@@ -18,7 +18,6 @@ export default function SavingsTracker() {
   });
 
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    // Load initial transactions from localStorage
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('transactions');
       return saved ? JSON.parse(saved) : [];
@@ -30,13 +29,12 @@ export default function SavingsTracker() {
   const [note, setNote] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Save balance to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('balance', balance.toString());
   }, [balance]);
 
-  // Save transactions to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('transactions', JSON.stringify(transactions));
   }, [transactions]);
@@ -46,6 +44,7 @@ export default function SavingsTracker() {
     if (numAmount <= 0 || !Number.isFinite(numAmount)) return;
     
     const newTransaction = {
+      id: Date.now().toString(), // Create unique ID
       amount: numAmount,
       date: new Date().toISOString(),
       note: note || 'Deposit'
@@ -53,6 +52,41 @@ export default function SavingsTracker() {
     
     setTransactions(prev => [newTransaction, ...prev]);
     setBalance(prev => prev + numAmount);
+    setAmount('');
+    setNote('');
+  };
+
+  const handleDelete = (transaction: Transaction) => {
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      setTransactions(prev => prev.filter(t => t.id !== transaction.id));
+      setBalance(prev => prev - transaction.amount);
+    }
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditingId(transaction.id);
+    setAmount(transaction.amount.toString());
+    setNote(transaction.note);
+  };
+
+  const handleUpdate = (oldTransaction: Transaction) => {
+    const numAmount = Number(amount);
+    if (numAmount <= 0 || !Number.isFinite(numAmount)) return;
+
+    const updatedTransaction = {
+      ...oldTransaction,
+      amount: numAmount,
+      note: note
+    };
+
+    setTransactions(prev => 
+      prev.map(t => t.id === oldTransaction.id ? updatedTransaction : t)
+    );
+
+    // Adjust the balance: remove old amount and add new amount
+    setBalance(prev => prev - oldTransaction.amount + numAmount);
+    
+    setEditingId(null);
     setAmount('');
     setNote('');
   };
@@ -88,7 +122,7 @@ export default function SavingsTracker() {
               style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
             />
             <button 
-              onClick={handleDeposit}
+              onClick={editingId ? () => handleUpdate(transactions.find(t => t.id === editingId)!) : handleDeposit}
               disabled={!amount || Number(amount) <= 0}
               style={{ 
                 width: '100%', 
@@ -100,8 +134,29 @@ export default function SavingsTracker() {
                 cursor: !amount || Number(amount) <= 0 ? 'not-allowed' : 'pointer'
               }}
             >
-              Add Deposit
+              {editingId ? 'Update Transaction' : 'Add Deposit'}
             </button>
+            {editingId && (
+              <button 
+                onClick={() => {
+                  setEditingId(null);
+                  setAmount('');
+                  setNote('');
+                }}
+                style={{ 
+                  width: '100%', 
+                  padding: '8px', 
+                  backgroundColor: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginTop: '10px'
+                }}
+              >
+                Cancel Edit
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ marginBottom: '30px' }}>
@@ -132,9 +187,9 @@ export default function SavingsTracker() {
         <div>
           <h3 style={{ fontWeight: 'bold', marginBottom: '15px' }}>Transaction History</h3>
           <div>
-            {transactions.map((tx, index) => (
+            {transactions.map((tx) => (
               <div 
-                key={index}
+                key={tx.id}
                 style={{ 
                   padding: '10px', 
                   backgroundColor: '#f8f9fa', 
@@ -151,8 +206,42 @@ export default function SavingsTracker() {
                     {new Date(tx.date).toLocaleDateString()}
                   </div>
                 </div>
-                <div style={{ color: '#22c55e', fontWeight: '500' }}>
-                  +${tx.amount.toFixed(2)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ color: '#22c55e', fontWeight: '500' }}>
+                    +${tx.amount.toFixed(2)}
+                  </div>
+                  {isAdmin && (
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button
+                        onClick={() => handleEdit(tx)}
+                        style={{
+                          padding: '4px 8px',
+                          backgroundColor: '#4b5563',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(tx)}
+                        style={{
+                          padding: '4px 8px',
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
