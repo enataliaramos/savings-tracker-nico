@@ -7,6 +7,7 @@ export default function SavingsTracker() {
   const [note, setNote] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Array<{id: string; amount: number; date: string; note: string}>>([]);
 
   const handleDeposit = () => {
@@ -22,6 +23,39 @@ export default function SavingsTracker() {
     
     setTransactions(prev => [newTransaction, ...prev]);
     setBalance(prev => prev + numAmount);
+    setAmount('');
+    setNote('');
+  };
+
+  const handleDelete = (transaction: {id: string; amount: number}) => {
+    if (window.confirm('Are you sure you want to delete this transaction?')) {
+      setTransactions(prev => prev.filter(t => t.id !== transaction.id));
+      setBalance(prev => prev - transaction.amount);
+    }
+  };
+
+  const handleEdit = (transaction: {id: string; amount: number; note: string}) => {
+    setEditingId(transaction.id);
+    setAmount(transaction.amount.toString());
+    setNote(transaction.note);
+  };
+
+  const handleUpdate = (oldTransaction: {id: string; amount: number}) => {
+    const numAmount = Number(amount);
+    if (numAmount <= 0 || !Number.isFinite(numAmount)) return;
+
+    const updatedTransaction = {
+      id: oldTransaction.id,
+      amount: numAmount,
+      date: new Date().toISOString(),
+      note: note || 'Deposit'
+    };
+
+    setTransactions(prev => 
+      prev.map(t => t.id === oldTransaction.id ? updatedTransaction : t)
+    );
+    setBalance(prev => prev - oldTransaction.amount + numAmount);
+    setEditingId(null);
     setAmount('');
     setNote('');
   };
@@ -91,7 +125,10 @@ export default function SavingsTracker() {
             }}
           />
           <button
-            onClick={handleDeposit}
+            onClick={editingId ? 
+              () => handleUpdate(transactions.find(t => t.id === editingId)!) :
+              handleDeposit
+            }
             disabled={!amount || Number(amount) <= 0}
             style={{
               width: '100%',
@@ -105,8 +142,30 @@ export default function SavingsTracker() {
               opacity: (!amount || Number(amount) <= 0) ? 0.5 : 1
             }}
           >
-            Add Deposit
+            {editingId ? 'Update Deposit' : 'Add Deposit'}
           </button>
+          {editingId && (
+            <button
+              onClick={() => {
+                setEditingId(null);
+                setAmount('');
+                setNote('');
+              }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#ef4444',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                marginTop: '10px'
+              }}
+            >
+              Cancel Edit
+            </button>
+          )}
         </div>
       ) : (
         <div style={{ 
@@ -182,8 +241,40 @@ export default function SavingsTracker() {
                   {new Date(tx.date).toLocaleDateString()}
                 </div>
               </div>
-              <div style={{ color: '#4ade80', fontWeight: '500' }}>
-                +${tx.amount.toFixed(2)}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ color: '#4ade80', fontWeight: '500' }}>
+                  +${tx.amount.toFixed(2)}
+                </div>
+                {isAdmin && (
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <button
+                      onClick={() => handleEdit(tx)}
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: '#f3f4f6',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDelete(tx)}
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: '#f3f4f6',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
