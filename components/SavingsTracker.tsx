@@ -190,13 +190,33 @@ export default function SavingsTracker() {
 
       {/* Action Buttons */}
       {isAdmin ? (
-        <div style={{
-          backgroundColor: 'white',
-          padding: '20px',
-          borderRadius: '12px',
-          marginBottom: '20px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
+  <div style={{
+    backgroundColor: 'white',
+    padding: '20px',
+    borderRadius: '12px',
+    marginBottom: '20px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+  }}>
+    <button
+      onClick={() => setIsAdmin(false)}
+      style={{
+        width: '100%',
+        padding: '12px',
+        backgroundColor: '#f3f4f6',
+        color: '#374151',
+        border: 'none',
+        borderRadius: '8px',
+        fontSize: '16px',
+        cursor: 'pointer',
+        marginBottom: '15px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px'
+      }}
+    >
+      ← Back to Cards
+    </button>
           <input
             type="number"
             placeholder="Amount"
