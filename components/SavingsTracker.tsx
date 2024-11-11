@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 
 interface Transaction {
-  id: string; // Adding an ID to uniquely identify transactions
+  id: string;
   amount: number;
   date: string;
   note: string;
@@ -17,165 +17,158 @@ export default function SavingsTracker() {
     return 0;
   });
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+  const [goal, setGoal] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('transactions');
-      return saved ? JSON.parse(saved) : [];
+      const saved = localStorage.getItem('goal');
+      return saved ? Number(saved) : 1000;
     }
-    return [];
+    return 1000;
   });
 
-  const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [password, setPassword] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    localStorage.setItem('balance', balance.toString());
-  }, [balance]);
-
-  useEffect(() => {
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-  }, [transactions]);
-
-  const handleDeposit = () => {
-    const numAmount = Number(amount);
-    if (numAmount <= 0 || !Number.isFinite(numAmount)) return;
-    
-    const newTransaction = {
-      id: Date.now().toString(), // Create unique ID
-      amount: numAmount,
-      date: new Date().toISOString(),
-      note: note || 'Deposit'
-    };
-    
-    setTransactions(prev => [newTransaction, ...prev]);
-    setBalance(prev => prev + numAmount);
-    setAmount('');
-    setNote('');
-  };
-
-  const handleDelete = (transaction: Transaction) => {
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
-      setTransactions(prev => prev.filter(t => t.id !== transaction.id));
-      setBalance(prev => prev - transaction.amount);
+  const [goalName, setGoalName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('goalName');
+      return saved || "Savings Goal";
     }
-  };
+    return "Savings Goal";
+  });
 
-  const handleEdit = (transaction: Transaction) => {
-    setEditingId(transaction.id);
-    setAmount(transaction.amount.toString());
-    setNote(transaction.note);
-  };
+  // ... [keep other existing state variables] ...
 
-  const handleUpdate = (oldTransaction: Transaction) => {
-    const numAmount = Number(amount);
-    if (numAmount <= 0 || !Number.isFinite(numAmount)) return;
-
-    const updatedTransaction = {
-      ...oldTransaction,
-      amount: numAmount,
-      note: note
-    };
-
-    setTransactions(prev => 
-      prev.map(t => t.id === oldTransaction.id ? updatedTransaction : t)
-    );
-
-    // Adjust the balance: remove old amount and add new amount
-    setBalance(prev => prev - oldTransaction.amount + numAmount);
-    
-    setEditingId(null);
-    setAmount('');
-    setNote('');
-  };
+  const progressPercentage = Math.min((balance / goal) * 100, 100);
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center', marginBottom: '20px' }}>
-          Nico&apos;s Savings Tracker
-        </h1>
+    <div style={{ 
+      maxWidth: '430px', 
+      margin: '0 auto', 
+      minHeight: '100vh',
+      backgroundColor: '#f8f9fa',
+      padding: '20px'
+    }}>
+      {/* Header */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '30px'
+      }}>
+        <div style={{ fontSize: '20px', fontWeight: '500' }}>{goalName}</div>
+        {isAdmin && <button 
+          onClick={() => {/* Add edit goal handler */}}
+          style={{ 
+            background: 'none',
+            border: 'none',
+            color: '#2563eb',
+            cursor: 'pointer'
+          }}
+        >✏️</button>}
+      </div>
 
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#2563eb' }}>
-            ${balance.toFixed(2)}
+      {/* Progress Circle */}
+      <div style={{ 
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginBottom: '30px'
+      }}>
+        <div style={{
+          width: '200px',
+          height: '200px',
+          borderRadius: '50%',
+          background: `conic-gradient(#4ade80 ${progressPercentage}%, #e5e7eb ${progressPercentage}% 100%)`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '20px',
+          position: 'relative'
+        }}>
+          <div style={{
+            width: '180px',
+            height: '180px',
+            borderRadius: '50%',
+            backgroundColor: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '24px',
+            fontWeight: 'bold'
+          }}>
+            {Math.round(progressPercentage)}%
           </div>
-          <div style={{ color: '#666' }}>Current Balance</div>
         </div>
 
+        <div style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '5px' }}>
+          ${balance.toFixed(2)}
+        </div>
+        <div style={{ color: '#6b7280', marginBottom: '20px' }}>
+          ${goal.toFixed(2)} goal
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div style={{
+        display: 'flex',
+        gap: '10px',
+        marginBottom: '30px'
+      }}>
         {isAdmin ? (
-          <div style={{ marginBottom: '30px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+          <>
             <input
               type="number"
               placeholder="Amount"
               value={amount}
               onChange={e => setAmount(e.target.value)}
-              style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
+              style={{
+                flex: 1,
+                padding: '12px',
+                borderRadius: '10px',
+                border: '1px solid #e5e7eb',
+                fontSize: '16px'
+              }}
             />
-            <input
-              type="text"
-              placeholder="Note (optional)"
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
-            />
-            <button 
-              onClick={editingId ? () => handleUpdate(transactions.find(t => t.id === editingId)!) : handleDeposit}
+            <button
+              onClick={handleDeposit}
               disabled={!amount || Number(amount) <= 0}
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                backgroundColor: !amount || Number(amount) <= 0 ? '#ccc' : '#2563eb',
+              style={{
+                padding: '12px 24px',
+                backgroundColor: '#4ade80',
                 color: 'white',
                 border: 'none',
-                borderRadius: '4px',
-                cursor: !amount || Number(amount) <= 0 ? 'not-allowed' : 'pointer'
+                borderRadius: '10px',
+                fontSize: '16px',
+                cursor: 'pointer',
+                opacity: (!amount || Number(amount) <= 0) ? 0.5 : 1
               }}
             >
-              {editingId ? 'Update Transaction' : 'Add Deposit'}
+              Add money
             </button>
-            {editingId && (
-              <button 
-                onClick={() => {
-                  setEditingId(null);
-                  setAmount('');
-                  setNote('');
-                }}
-                style={{ 
-                  width: '100%', 
-                  padding: '8px', 
-                  backgroundColor: '#dc2626',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginTop: '10px'
-                }}
-              >
-                Cancel Edit
-              </button>
-            )}
-          </div>
+          </>
         ) : (
-          <div style={{ marginBottom: '30px' }}>
+          <div style={{ width: '100%' }}>
             <input
               type="password"
               placeholder="Admin Password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '8px', marginBottom: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '10px',
+                border: '1px solid #e5e7eb',
+                marginBottom: '10px',
+                fontSize: '16px'
+              }}
             />
-            <button 
+            <button
               onClick={() => setIsAdmin(password === '123456')}
-              style={{ 
-                width: '100%', 
-                padding: '8px', 
-                backgroundColor: '#2563eb',
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#4ade80',
                 color: 'white',
                 border: 'none',
-                borderRadius: '4px',
+                borderRadius: '10px',
+                fontSize: '16px',
                 cursor: 'pointer'
               }}
             >
@@ -183,69 +176,75 @@ export default function SavingsTracker() {
             </button>
           </div>
         )}
+      </div>
 
-        <div>
-          <h3 style={{ fontWeight: 'bold', marginBottom: '15px' }}>Transaction History</h3>
-          <div>
-            {transactions.map((tx) => (
-              <div 
-                key={tx.id}
-                style={{ 
-                  padding: '10px', 
-                  backgroundColor: '#f8f9fa', 
-                  borderRadius: '4px',
-                  marginBottom: '8px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: '500' }}>{tx.note}</div>
-                  <div style={{ fontSize: '14px', color: '#666' }}>
-                    {new Date(tx.date).toLocaleDateString()}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ color: '#22c55e', fontWeight: '500' }}>
-                    +${tx.amount.toFixed(2)}
-                  </div>
-                  {isAdmin && (
-                    <div style={{ display: 'flex', gap: '5px' }}>
-                      <button
-                        onClick={() => handleEdit(tx)}
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#4b5563',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(tx)}
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#dc2626',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px'
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+      {/* Recent Activity */}
+      <div>
+        <h3 style={{ 
+          fontSize: '18px', 
+          fontWeight: '500', 
+          marginBottom: '15px',
+          color: '#374151'
+        }}>
+          Recent activity
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {transactions.map((tx) => (
+            <div 
+              key={tx.id}
+              style={{ 
+                padding: '15px',
+                backgroundColor: 'white',
+                borderRadius: '10px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: '500', marginBottom: '4px' }}>{tx.note}</div>
+                <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                  {new Date(tx.date).toLocaleDateString()}
                 </div>
               </div>
-            ))}
-          </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ color: '#4ade80', fontWeight: '500' }}>
+                  +${tx.amount.toFixed(2)}
+                </div>
+                {isAdmin && (
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <button
+                      onClick={() => handleEdit(tx)}
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: '#f3f4f6',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={() => handleDelete(tx)}
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: '#f3f4f6',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
