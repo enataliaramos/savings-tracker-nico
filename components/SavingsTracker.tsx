@@ -1,71 +1,13 @@
 'use client';
-import { useState, useEffect } from 'react';
-
-interface Transaction {
-  id: string;
-  amount: number;
-  date: string;
-  note: string;
-}
+import { useState } from 'react';
 
 export default function SavingsTracker() {
-  const [balance, setBalance] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('balance');
-      return saved ? Number(saved) : 0;
-    }
-    return 0;
-  });
-
-  const [goal, setGoal] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('goal');
-      return saved ? Number(saved) : 1000;
-    }
-    return 1000;
-  });
-
-  const [goalName, setGoalName] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('goalName');
-      return saved || "Savings Goal";
-    }
-    return "Savings Goal";
-  });
-
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('transactions');
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
-
+  const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [password, setPassword] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [isEditingGoal, setIsEditingGoal] = useState(false);
-  const [newGoalAmount, setNewGoalAmount] = useState('');
-  const [newGoalName, setNewGoalName] = useState('');
-
-  // Save data to localStorage
-  useEffect(() => {
-    localStorage.setItem('balance', balance.toString());
-  }, [balance]);
-
-  useEffect(() => {
-    localStorage.setItem('goal', goal.toString());
-  }, [goal]);
-
-  useEffect(() => {
-    localStorage.setItem('goalName', goalName);
-  }, [goalName]);
-
-  useEffect(() => {
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-  }, [transactions]);
+  const [transactions, setTransactions] = useState<Array<{id: string; amount: number; date: string; note: string}>>([]);
 
   const handleDeposit = () => {
     const numAmount = Number(amount);
@@ -84,55 +26,7 @@ export default function SavingsTracker() {
     setNote('');
   };
 
-  const handleDelete = (transaction: Transaction) => {
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
-      setTransactions(prev => prev.filter(t => t.id !== transaction.id));
-      setBalance(prev => prev - transaction.amount);
-    }
-  };
-
-  const handleEdit = (transaction: Transaction) => {
-    setEditingId(transaction.id);
-    setAmount(transaction.amount.toString());
-    setNote(transaction.note);
-  };
-
-  const handleUpdate = (oldTransaction: Transaction) => {
-    const numAmount = Number(amount);
-    if (numAmount <= 0 || !Number.isFinite(numAmount)) return;
-
-    const updatedTransaction = {
-      ...oldTransaction,
-      amount: numAmount,
-      note: note
-    };
-
-    setTransactions(prev => 
-      prev.map(t => t.id === oldTransaction.id ? updatedTransaction : t)
-    );
-    
-    setBalance(prev => prev - oldTransaction.amount + numAmount);
-    setEditingId(null);
-    setAmount('');
-    setNote('');
-  };
-
-  const handleEditGoal = () => {
-    setIsEditingGoal(true);
-    setNewGoalAmount(goal.toString());
-    setNewGoalName(goalName);
-  };
-
-  const handleUpdateGoal = () => {
-    const numAmount = Number(newGoalAmount);
-    if (numAmount > 0 && Number.isFinite(numAmount)) {
-      setGoal(numAmount);
-      setGoalName(newGoalName || 'Savings Goal');
-    }
-    setIsEditingGoal(false);
-  };
-
-  const progressPercentage = Math.min((balance / goal) * 100, 100);
+  const progressPercentage = 100;
 
   return (
     <div style={{ 
@@ -149,67 +43,7 @@ export default function SavingsTracker() {
         alignItems: 'center',
         marginBottom: '30px'
       }}>
-        {isEditingGoal ? (
-          <div style={{ width: '100%' }}>
-            <input
-              type="text"
-              value={newGoalName}
-              onChange={(e) => setNewGoalName(e.target.value)}
-              placeholder="Goal Name"
-              style={{
-                width: '100%',
-                padding: '8px',
-                marginBottom: '10px',
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb'
-              }}
-            />
-            <input
-              type="number"
-              value={newGoalAmount}
-              onChange={(e) => setNewGoalAmount(e.target.value)}
-              placeholder="Goal Amount"
-              style={{
-                width: '100%',
-                padding: '8px',
-                marginBottom: '10px',
-                borderRadius: '8px',
-                border: '1px solid #e5e7eb'
-              }}
-            />
-            <button
-              onClick={handleUpdateGoal}
-              style={{
-                padding: '8px',
-                backgroundColor: '#4ade80',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                width: '100%',
-                cursor: 'pointer'
-              }}
-            >
-              Update Goal
-            </button>
-          </div>
-        ) : (
-          <>
-            <div style={{ fontSize: '20px', fontWeight: '500' }}>{goalName}</div>
-            {isAdmin && (
-              <button 
-                onClick={handleEditGoal}
-                style={{ 
-                  background: 'none',
-                  border: 'none',
-                  color: '#2563eb',
-                  cursor: 'pointer'
-                }}
-              >
-                ✏️
-              </button>
-            )}
-          </>
-        )}
+        <div style={{ fontSize: '20px', fontWeight: '500' }}>Nico&apos;s Savings</div>
       </div>
 
       {/* Progress Circle */}
@@ -249,7 +83,7 @@ export default function SavingsTracker() {
           ${balance.toFixed(2)}
         </div>
         <div style={{ color: '#6b7280', marginBottom: '20px' }}>
-          ${goal.toFixed(2)} goal
+          Current Balance
         </div>
       </div>
 
@@ -356,40 +190,8 @@ export default function SavingsTracker() {
                   {new Date(tx.date).toLocaleDateString()}
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ color: '#4ade80', fontWeight: '500' }}>
-                  +${tx.amount.toFixed(2)}
-                </div>
-                {isAdmin && (
-                  <div style={{ display: 'flex', gap: '5px' }}>
-                    <button
-                      onClick={() => handleEdit(tx)}
-                      style={{
-                        padding: '4px 8px',
-                        backgroundColor: '#f3f4f6',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => handleDelete(tx)}
-                      style={{
-                        padding: '4px 8px',
-                        backgroundColor: '#f3f4f6',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                )}
+              <div style={{ color: '#4ade80', fontWeight: '500' }}>
+                +${tx.amount.toFixed(2)}
               </div>
             </div>
           ))}
